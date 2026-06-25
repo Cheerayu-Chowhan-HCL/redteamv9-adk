@@ -66,7 +66,7 @@ and call generate_report() when complete. Begin now."""
     print("=== ADK Engagement Starting ===")
     print()
 
-    async def run_with_timeout(runner, user_id, session_id, content, timeout_secs=300):
+    async def run_with_timeout(runner, user_id, session_id, content, timeout_secs=900):
         try:
             async with asyncio.timeout(timeout_secs):
                 async for event in runner.run_async(
@@ -105,7 +105,7 @@ and call generate_report() when complete. Begin now."""
             traceback.print_exc()
             return False
 
-    await run_with_timeout(runner, USER_ID, session_id, content, timeout_secs=300)
+    await run_with_timeout(runner, USER_ID, session_id, content, timeout_secs=900)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

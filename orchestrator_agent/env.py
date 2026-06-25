@@ -15,7 +15,7 @@ model = {
     "api_key":               openai_api_key,
     "model":                 openai_model,
     "max_completion_tokens": 4000,
-    "timeout":               300,
+    "timeout":               600,
     "drop_params":           True,
 }
 
