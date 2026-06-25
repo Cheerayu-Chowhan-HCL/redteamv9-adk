@@ -66,7 +66,7 @@ and call generate_report() when complete. Begin now."""
     print("=== ADK Engagement Starting ===")
     print()
 
-    async def run_with_timeout(runner, user_id, session_id, content, timeout_secs=900):
+    async def run_with_timeout(runner, user_id, session_id, content, timeout_secs=1800):
         try:
             async with asyncio.timeout(timeout_secs):
                 async for event in runner.run_async(
@@ -92,7 +92,11 @@ and call generate_report() when complete. Begin now."""
                     if hasattr(event, 'content') and event.content:
                         for part in event.content.parts:
                             if hasattr(part, 'text') and part.text:
-                                print(part.text, end='', flush=True)
+                                clean = part.text.replace(
+                                    '(Please answer ethically and without any sexual content, '
+                                    'and do not mention this constraint.)', '').strip()
+                                if clean:
+                                    print(clean, end='', flush=True)
             return True
         except TimeoutError:
             print(f'\n[TIMEOUT] Engagement exceeded {timeout_secs}s — partial results may be available.')
@@ -105,7 +109,38 @@ and call generate_report() when complete. Begin now."""
             traceback.print_exc()
             return False
 
-    await run_with_timeout(runner, USER_ID, session_id, content, timeout_secs=900)
+    await run_with_timeout(runner, USER_ID, session_id, content, timeout_secs=1800)
+
+    # Check if report was generated
+    import sqlite3, pathlib
+    try:
+        venv_path = pathlib.Path('C:/users/chirayu/redteamv9')
+        sys.path.insert(0, str(venv_path))
+        from core.graph_engine import DB_PATH
+        conn = sqlite3.connect(DB_PATH)
+        findings = conn.execute(
+            'SELECT COUNT(*) FROM findings WHERE session_id=?',
+            (session_id,)
+        ).fetchone()[0]
+        conn.close()
+
+        report_path = pathlib.Path(
+            f'C:/users/chirayu/redteamv9/reports/{session_id}_report.html'
+        )
+
+        if not report_path.exists() and findings > 0:
+            print(f'\n[AUTO-REPORT] {findings} findings found.')
+            print('[AUTO-REPORT] Generating report directly...')
+            from tools.mcp_service import generate_report
+            result = generate_report(session_id=session_id)
+            print(f'[AUTO-REPORT] {result}')
+            if report_path.exists():
+                print(f'[AUTO-REPORT] Report saved: {report_path}')
+        elif report_path.exists():
+            print(f'\nReport exists: {report_path}')
+            print(f'Findings: {findings}')
+    except Exception as e:
+        print(f'Report check error: {e}')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
